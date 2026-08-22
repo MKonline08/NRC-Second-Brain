@@ -12,7 +12,7 @@ A private visual home for school, dual enrollment, personal files, notes, links,
 - Private file previews, encrypted personal vault notes with automatic five-minute lock, and expiring password-protected share links
 - Calendar-ready tasks, flashcards, review flow, and an opt-in AI study assistant
 - Optional GitHub repository linking and Google Drive linking
-- Docker, PostgreSQL, health checks, database migrations, backups, and update scripts for CasaOS
+- One-container CasaOS deployment with an embedded private database, health checks, backups, and update scripts
 
 ## Run it locally
 
@@ -24,8 +24,8 @@ A private visual home for school, dual enrollment, personal files, notes, links,
 ## Deploy on CasaOS
 
 1. Put this repository on the CasaOS machine, either by cloning it or using the GitHub source option in CasaOS.
-2. Copy `.env.example` to `.env` and replace every `replace-with...` value with a unique secret. Keep `.env` only on the server.
-3. In CasaOS, create a Compose app from `docker-compose.yml` or run it from the project folder. The first start creates the database tables automatically.
+2. Create `/DATA/AppData/nrc-second-brain` on the server. The first start securely creates the private database and keys inside that folder.
+3. In CasaOS, import `docker-compose.casaos.yml`, which has exactly one app service, or run `docker compose up -d --build` from the project folder.
 4. Open `http://SERVER-IP:3000`, complete first-run setup, and sign in.
 5. Change `/DATA/Media` in `docker-compose.yml` if the folder you want to index is elsewhere. It is mounted read-only, so NRC cannot alter your original server library. NRC detects supported files automatically when you open the workspace, at most once every five minutes; **Scan server** runs an immediate scan.
 
@@ -53,3 +53,4 @@ The app stores its database and uploads under `/DATA/AppData/nrc-second-brain/`,
 ## Important safety note
 
 Never commit `.env`, uploaded files, database folders, backups, or passwords to GitHub. This repository contains only the app code and deployment instructions.
+
