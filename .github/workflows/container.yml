@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Prepare image name
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/nrc-second-brain" >> "$GITHUB_ENV"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -27,15 +25,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:${{ github.sha }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: migrate
-          push: true
-          tags: ${{ env.IMAGE }}:migrate-latest
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            ghcr.io/${{ github.repository_owner }}/nrc-second-brain:latest
+            ghcr.io/${{ github.repository_owner }}/nrc-second-brain:${{ github.sha }}
+
