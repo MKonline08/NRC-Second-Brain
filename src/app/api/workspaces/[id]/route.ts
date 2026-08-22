@@ -1,0 +1,11 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { getSession } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { requireSameOrigin } from "@/lib/security";
+
+const updateSchema = z.object({ name: z.string().trim().min(1).max(60).optional(), color: z.enum(["cyan", "blue", "violet", "green", "amber"]).optional() });
+async function ownedWorkspace(id: string, userId: string) { return db.workspace.findFirst({ where: { id, ownerId: userId } }); }
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) { const forbidden = requireSameOrigin(request); if (forbidden) return forbidden; const user = await getSession(); if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); const workspace = await ownedWorkspace((await params).id, user.id); if (!workspace) return NextResponse.json({ error: "Workspace not found." }, { status: 404 }); const parsed = updateSchema.safeParse(await request.json()); if (!parsed.success || !Object.keys(parsed.data).length) return NextResponse.json({ error: "Choose a valid workspace name or color." }, { status: 400 }); const updated = await db.workspace.update({ where: { id: workspace.id }, data: parsed.data }); await db.auditLog.create({ data: { userId: user.id, action: "workspace.updated", detail: workspace.id } }); return NextResponse.json({ workspace: updated }); }
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) { const forbidden = requireSameOrigin(request); if (forbidden) return forbidden; const user = await getSession(); if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); const workspace = await ownedWorkspace((await params).id, user.id); if (!workspace) return NextResponse.json({ error: "Workspace not found." }, { status: 404 }); const itemCount = await db.brainItem.count({ where: { workspaceId: workspace.id } }); if (itemCount) return NextResponse.json({ error: "Move or delete this workspace's items before removing it." }, { status: 409 }); await db.workspace.delete({ where: { id: workspace.id } }); await db.auditLog.create({ data: { userId: user.id, action: "workspace.deleted", detail: workspace.id } }); return NextResponse.json({ ok: true }); }

@@ -28,6 +28,8 @@ model User {
   integrations Integration[]
   flashcards    Flashcard[]
   shareLinks    ShareLink[]
+  sessions      Session[]
+  vaultNotes    VaultNote[]
 }
 
 model Workspace {
@@ -115,4 +117,26 @@ model ShareLink {
   ownerId      String
   owner        User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   createdAt    DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  revokedAt DateTime?
+}
+
+model VaultNote {
+  id        String   @id @default(cuid())
+  title     String
+  encrypted String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -18,3 +18,11 @@ export function loginAllowed(request: NextRequest) {
 }
 
 export function clearLoginAttempts(request: NextRequest) { attempts.delete(request.headers.get("x-forwarded-for") ?? "local"); }
+
+export function sharePasswordAllowed(request: NextRequest, token: string) {
+  const key = `share:${request.headers.get("x-forwarded-for") ?? "local"}:${token}`;
+  const now = Date.now(); const record = attempts.get(key);
+  if (record && record.resetAt > now && record.count >= 8) return false;
+  if (!record || record.resetAt <= now) attempts.set(key, { count: 1, resetAt: now + 15 * 60 * 1000 }); else record.count += 1;
+  return true;
+}

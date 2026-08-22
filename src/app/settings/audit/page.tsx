@@ -1,0 +1,6 @@
+"use client";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+type Entry={id:string;action:string;detail:string|null;createdAt:string};
+export default function AuditPage(){const router=useRouter();const [entries,setEntries]=useState<Entry[]>([]);useEffect(()=>{fetch("/api/audit").then(async r=>{if(r.status===401){router.replace("/login");return;}const d=await r.json();setEntries(d.entries);});},[router]);return <main className="settings-page"><header className="settings-header"><a href="/settings" className="back-link"><ArrowLeft size={15}/>Settings</a><span>Audit log</span></header><section className="settings-content"><p className="eyebrow">ACCOUNT ACTIVITY</p><h1>What happened in your second brain.</h1><p className="settings-intro">A private record of sign-ins, security changes, uploads, syncs, shares, and study actions.</p><div className="audit-list">{entries.map(entry=><article key={entry.id}><ShieldCheck size={16}/><span><strong>{entry.action.replaceAll("."," ")}</strong><small>{entry.detail||"No additional details"}</small></span><time>{new Date(entry.createdAt).toLocaleString()}</time></article>)}{entries.length===0&&<p className="settings-intro">No activity recorded yet.</p>}</div></section></main>}

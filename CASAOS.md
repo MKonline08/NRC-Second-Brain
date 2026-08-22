@@ -1,21 +1,49 @@
-# CasaOS setup
+# CasaOS Deployment
 
-1. Create folders on the server:
+NRC Second Brain runs privately on your CasaOS server. Its database, uploads, configuration, and backups live outside the containers, so rebuilding the app does not erase your information.
+
+## Before First Start
+
+1. Clone this repository to a stable server folder, for example `/opt/nrc-second-brain`.
+2. Create these persistent folders:
    - `/DATA/AppData/nrc-second-brain/uploads`
    - `/DATA/AppData/nrc-second-brain/config`
    - `/DATA/AppData/nrc-second-brain/db`
    - `/DATA/AppData/nrc-second-brain/backups`
-2. Copy `.env.example` to `.env` and set a long `SESSION_SECRET` plus a unique `POSTGRES_PASSWORD`.
-3. In CasaOS, create a custom Compose app and paste in `docker-compose.yml`.
-4. Point your Playit.gg tunnel at the server port `3000`.
-5. In your domain DNS, connect the name you want to the Playit.gg address.
+3. Copy `.env.example` to `.env` inside the cloned repository.
+4. Set unique values for `SESSION_SECRET`, `CREDENTIALS_ENCRYPTION_KEY`, and `POSTGRES_PASSWORD` in `.env`.
 
-## Automatically detecting server files
+`CREDENTIALS_ENCRYPTION_KEY` must be a base64-encoded 32-byte key. Create one once with `openssl rand -base64 32`, save it in `.env`, and do not change it after connecting GitHub, Google Drive, or creating vault notes. Changing it would make those encrypted values unreadable.
 
-The Compose file mounts `/DATA/Media` as a **read-only** library. Change that path to the exact folder you want NRC to discover, then choose **Scan server** inside NRC Second Brain. The scanner finds supported PDFs, notes, Office files, and images and adds them to the Personal workspace without moving or changing the original files.
+## Start in CasaOS
 
-Back up the `uploads`, `config`, and `db` folders before every app update. Updating the app container must never replace those folders.
+1. In CasaOS, create a custom Compose app from this repository's `docker-compose.yml`, or run `docker compose up -d --build` from the repository folder.
+2. Open `http://YOUR-SERVER-IP:3000` and complete the one-time administrator setup.
+3. For CasaOS files, change the left side of `/DATA/Media:/library:ro` in `docker-compose.yml` to the folder you want NRC to discover. It is mounted read-only, so NRC never alters the original library.
 
-## GitHub updates and rollback safety
+NRC checks that mounted folder automatically when the workspace opens, at most once every five minutes. Use **Scan server** in the workspace for an immediate scan into the selected workspace.
 
-GitHub Actions builds a container image whenever `master` is updated. After the first successful workflow run, use `docker-compose.ghcr.yml` together with the normal Compose file. The included `scripts/update.sh` takes a database/upload/config backup before it pulls the latest image and restarts the app. Keep the last few backup folders; a database restore can be made from the matching `database.sql` file if an update needs to be rolled back.
+## Domain and Playit.gg
+
+1. Create a Playit tunnel that forwards your public hostname to the CasaOS machine on port `3000`.
+2. Follow Playit's DNS instructions for your domain.
+3. Enable HTTPS in Playit and set `APP_BASE_URL` in `.env` to your final `https://` address.
+4. Restart the app after changing `.env`.
+
+Expose only NRC's port through Playit. Do not expose CasaOS itself or PostgreSQL.
+
+## Optional Integrations
+
+- **GitHub:** create a fine-grained access token that can read only the repositories you choose, then connect it in NRC Settings.
+- **Google Drive:** create a Google OAuth web client. Its redirect address must be `https://YOUR-DOMAIN/api/integrations/google/callback`. Add its client ID and client secret to `.env`, then restart NRC before connecting Drive.
+- **AI study help:** add `OPENAI_API_KEY` only when you want that optional feature. It stays disabled without the key.
+
+## Safe Updates and Backups
+
+Run `scripts/backup.sh` whenever you want a timestamped database, upload, and configuration backup. It keeps the most recent 30 days of backup folders.
+
+To update from GitHub, run `scripts/update.sh` from the checked-out repository. It creates a backup, takes a fast-forward GitHub update, rebuilds the containers, and applies migrations. Do not delete `/DATA/AppData/nrc-second-brain/` unless you deliberately want to remove the app and its data.
+
+After the GitHub container workflow has completed at least once, advanced users can instead combine `docker-compose.yml` with `docker-compose.ghcr.yml` to pull the prebuilt GitHub Container Registry image. The normal source-based update path remains the simplest default.
+
+Keep at least one backup copy somewhere other than the CasaOS server.
