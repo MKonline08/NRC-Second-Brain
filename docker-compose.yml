@@ -9,9 +9,12 @@ services:
     environment:
       DATABASE_URL: postgresql://nrc:${POSTGRES_PASSWORD}@db:5432/nrc_second_brain
       UPLOAD_DIR: /app/data/uploads
+      LIBRARY_DIR: /library
     volumes:
       - /DATA/AppData/nrc-second-brain/uploads:/app/data/uploads
       - /DATA/AppData/nrc-second-brain/config:/app/data/config
+      # Change the left-side path to the CasaOS folder you want NRC to index. It stays read-only.
+      - /DATA/Media:/library:ro
     depends_on:
       db:
         condition: service_healthy
