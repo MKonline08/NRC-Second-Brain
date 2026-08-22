@@ -9,6 +9,7 @@ A private visual home for school, dual enrollment, personal files, notes, links,
 - First-run setup with a strong administrator password and private sign-in
 - PostgreSQL data storage with default School, Dual Enrollment, Personal, and Projects workspaces
 - Server-side file uploads with validation for PDFs, notes, Office documents, and images
+- Recoverable trash API, private data export, health reporting, and an audit log
 - Add file/link items to the graph in the browser
 - Clean, motion-aware dark interface built for a future private server deployment
 - Docker packaging ready for CasaOS
