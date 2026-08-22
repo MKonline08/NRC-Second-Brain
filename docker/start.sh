@@ -6,6 +6,9 @@ PGDATA="$DATA_DIR/postgres"
 SECRETS_FILE="$DATA_DIR/.nrc-secrets"
 
 mkdir -p "$PGDATA" "$DATA_DIR/uploads" "$DATA_DIR/config"
+mkdir -p /run/postgresql
+chown postgres:postgres /run/postgresql
+chmod 775 /run/postgresql
 
 if [ ! -f "$SECRETS_FILE" ]; then
   umask 077
