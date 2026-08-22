@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   if (!workspace) return NextResponse.json({ error: "No workspace is available." }, { status: 400 });
   const uploadDir = process.env.UPLOAD_DIR || path.join(process.cwd(), "data", "uploads"); await mkdir(uploadDir, { recursive: true });
   const extension = path.extname(file.name).toLowerCase().replace(/[^.a-z0-9]/g, ""); const storedName = `${randomUUID()}${extension}`;
-  await writeFile(path.join(uploadDir, storedName), Buffer.from(await file.arrayBuffer()));
+  await writeFile(path.join(/* turbopackIgnore: true */ uploadDir, storedName), Buffer.from(await file.arrayBuffer()));
   const item = await db.brainItem.create({ data: { title: String(form.get("title") || file.name).slice(0, 120), type: "file", filePath: storedName, mimeType: file.type, size: file.size, x: Number(form.get("x") || 50), y: Number(form.get("y") || 50), color: "blue", tags: ["Upload"], workspaceId: workspace.id } });
   await db.auditLog.create({ data: { userId: user.id, action: "file.uploaded", detail: item.id } });
   return NextResponse.json({ item }, { status: 201 });
