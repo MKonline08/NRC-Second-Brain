@@ -15,3 +15,7 @@
 The Compose file mounts `/DATA/Media` as a **read-only** library. Change that path to the exact folder you want NRC to discover, then choose **Scan server** inside NRC Second Brain. The scanner finds supported PDFs, notes, Office files, and images and adds them to the Personal workspace without moving or changing the original files.
 
 Back up the `uploads`, `config`, and `db` folders before every app update. Updating the app container must never replace those folders.
+
+## GitHub updates and rollback safety
+
+GitHub Actions builds a container image whenever `master` is updated. After the first successful workflow run, use `docker-compose.ghcr.yml` together with the normal Compose file. The included `scripts/update.sh` takes a database/upload/config backup before it pulls the latest image and restarts the app. Keep the last few backup folders; a database restore can be made from the matching `database.sql` file if an update needs to be rolled back.

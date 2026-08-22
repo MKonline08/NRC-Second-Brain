@@ -1,0 +1,7 @@
+services:
+  app:
+    image: ghcr.io/mkonline08/nrc-second-brain:latest
+    build: null
+  migrate:
+    image: ghcr.io/mkonline08/nrc-second-brain:migrate-latest
+    build: null
