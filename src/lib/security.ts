@@ -5,7 +5,12 @@ const attempts = new Map<string, { count: number; resetAt: number }>();
 export function requireSameOrigin(request: NextRequest) {
   const origin = request.headers.get("origin");
   if (!origin) return null;
-  if (origin !== request.nextUrl.origin) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
+  const allowedOrigins = new Set([request.nextUrl.origin]);
+  if (process.env.APP_BASE_URL) allowedOrigins.add(new URL(process.env.APP_BASE_URL).origin);
+  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const forwardedProtocol = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+  if (forwardedHost) allowedOrigins.add(`${forwardedProtocol}://${forwardedHost}`);
+  if (!allowedOrigins.has(origin)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
   return null;
 }
 
