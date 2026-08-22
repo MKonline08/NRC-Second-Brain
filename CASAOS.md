@@ -17,9 +17,21 @@ NRC Second Brain runs privately on your CasaOS server. Its database, uploads, co
 
 ## Start in CasaOS
 
-1. In CasaOS, create a custom Compose app from this repository's `docker-compose.yml`, or run `docker compose up -d --build` from the repository folder.
-2. Open `http://YOUR-SERVER-IP:3000` and complete the one-time administrator setup.
-3. For CasaOS files, change the left side of `/DATA/Media:/library:ro` in `docker-compose.yml` to the folder you want NRC to discover. It is mounted read-only, so NRC never alters the original library.
+Use one Compose stack. Do not create `app`, `db`, and `migrate` as separate custom apps: NRC cannot start until its database and migration job are part of the same stack.
+
+### CasaOS custom-app screen
+
+1. In CasaOS, choose **Custom Install** then **Import**.
+2. Paste the complete contents of [`docker-compose.casaos.yml`](docker-compose.casaos.yml). Do not fill the `app`, `db`, and `migrate` tabs by hand.
+3. Save it as **NRC Second Brain**. CasaOS should show `ghcr.io/mkonline08/nrc-second-brain:latest` for the `app` service and `postgres:16-alpine` for the `db` service.
+4. Create `/DATA/AppData/nrc-second-brain/.env` from `.env.example`, then set the three secrets before starting. In the custom-app form, use that file as the environment-file path when CasaOS asks for one.
+5. Open `http://YOUR-SERVER-IP:3000` and complete the one-time administrator setup.
+
+### Terminal install
+
+From the cloned project folder, use `docker compose -f docker-compose.yml up -d --build`. This is the simplest recovery path if a previous CasaOS custom-app record is greyed out.
+
+For CasaOS files, change the left side of `/DATA/Media:/library:ro` in the selected compose file to the folder you want NRC to discover. It is mounted read-only, so NRC never alters the original library.
 
 NRC checks that mounted folder automatically when the workspace opens, at most once every five minutes. Use **Scan server** in the workspace for an immediate scan into the selected workspace.
 
@@ -47,3 +59,4 @@ To update from GitHub, run `scripts/update.sh` from the checked-out repository. 
 After the GitHub container workflow has completed at least once, advanced users can instead combine `docker-compose.yml` with `docker-compose.ghcr.yml` to pull the prebuilt GitHub Container Registry image. The normal source-based update path remains the simplest default.
 
 Keep at least one backup copy somewhere other than the CasaOS server.
+
