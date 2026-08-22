@@ -32,7 +32,15 @@ if [ ! -f "$PGDATA/PG_VERSION" ]; then
 fi
 
 if ! su-exec postgres pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1; then
-  su-exec postgres pg_ctl -D "$PGDATA" -o "-c listen_addresses=127.0.0.1" -w start >/dev/null
+  # A stopped container can leave this harmless lock file behind after an unclean shutdown.
+  rm -f "$PGDATA/postmaster.pid"
+  POSTGRES_LOG="$DATA_DIR/postgres-startup.log"
+  : > "$POSTGRES_LOG"
+  chown postgres:postgres "$POSTGRES_LOG"
+  if ! su-exec postgres pg_ctl -D "$PGDATA" -o "-c listen_addresses=127.0.0.1" -l "$POSTGRES_LOG" -w start; then
+    cat "$POSTGRES_LOG" >&2
+    exit 1
+  fi
 fi
 
 if ! su-exec postgres psql -U postgres -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='nrc'" | grep -q 1; then
