@@ -14,7 +14,7 @@ export async function createSession(user: SessionUser) {
   const requestHeaders = await headers(); const session = await db.session.create({ data: { userId: user.id, userAgent: requestHeaders.get("user-agent"), ipAddress: requestHeaders.get("x-forwarded-for"), expiresAt: new Date(Date.now() + 7 * 86_400_000) } });
   const token = await new SignJWT({ ...user, sid: session.id }).setProtectedHeader({ alg: "HS256" }).setIssuedAt().setExpirationTime("7d").sign(signingSecret());
   const store = await cookies();
-  store.set(cookieName, token, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 7 });
+  store.set(cookieName, token, { httpOnly: true, secure: process.env.APP_BASE_URL?.startsWith("https://") ?? false, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 7 });
 }
 
 export async function getSession(): Promise<SessionUser | null> {
