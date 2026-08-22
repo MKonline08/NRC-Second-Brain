@@ -25,6 +25,6 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nrc-second-brain:latest
-            ghcr.io/${{ github.repository_owner }}/nrc-second-brain:${{ github.sha }}
+            ghcr.io/mkonline08/nrc-second-brain:latest
+            ghcr.io/mkonline08/nrc-second-brain:${{ github.sha }}
 
