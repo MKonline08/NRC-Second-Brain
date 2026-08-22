@@ -6,4 +6,28 @@ import { requireSameOrigin } from "@/lib/security";
 
 const schema = z.object({ action: z.enum(["summary", "study-guide", "quiz", "ask"]), itemIds: z.array(z.string()).min(1).max(25), question: z.string().max(2000).optional() });
 const prompts = { summary: "Create a concise, accurate summary with key ideas and next actions.", "study-guide": "Create a focused study guide: core concepts, definitions, likely test points, and a short review checklist.", quiz: "Create a ten-question practice quiz with answers hidden after each question.", ask: "Answer the user's question only from the provided material. State when the material does not contain the answer." };
-export async function POST(request: NextRequest) { const forbidden = requireSameOrigin(request); if (forbidden) return forbidden; const user = await getSession(); if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "AI is off. Add OPENAI_API_KEY to your private server environment to enable it." }, { status: 503 }); const parsed = schema.safeParse(await request.json()); if (!parsed.success) return NextResponse.json({ error: "Choose at least one item." }, { status: 400 }); const items = await db.brainItem.findMany({ where: { id: { in: parsed.data.itemIds }, workspace: { ownerId: user.id }, deletedAt: null }, select: { title: true, description: true, tags: true, type: true } }); if (!items.length) return NextResponse.json({ error: "No readable items found." }, { status: 404 }); const material = items.map((item: { title: string; description: string | null; tags: string[]; type: string }) => `TITLE: ${item.title}\nTYPE: ${item.type}\nTAGS: ${item.tags.join(", ")}\nCONTENT: ${item.description || "No text content available."}`).join("\n\n---\n\n"); const input = `${prompts[parsed.data.action]}${parsed.data.action === "ask" ? `\nQUESTION: ${parsed.data.question || ""}` : ""}\n\nMATERIAL:\n${material}`; const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.AI_MODEL || "gpt-5", input, store: false }) }); const data = await response.json() as { output_text?: string; error?: { message?: string } }; if (!response.ok) return NextResponse.json({ error: data.error?.message || "AI request failed." }, { status: 502 }); await db.auditLog.create({ data: { userId: user.id, action: `ai.${parsed.data.action}`, detail: `${items.length} items` } }); return NextResponse.json({ output: data.output_text || "No study response was returned." }); }
+
+type StudyItem = { title: string; description: string | null; tags: string[]; type: string };
+
+export async function POST(request: NextRequest) {
+  const forbidden = requireSameOrigin(request);
+  if (forbidden) return forbidden;
+  const user = await getSession();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!process.env.OPENAI_API_KEY) return NextResponse.json({ error: "AI is off. Add OPENAI_API_KEY to your private server environment to enable it." }, { status: 503 });
+
+  const parsed = schema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Choose at least one item." }, { status: 400 });
+
+  const items = await db.brainItem.findMany({ where: { id: { in: parsed.data.itemIds }, workspace: { ownerId: user.id }, deletedAt: null }, select: { title: true, description: true, tags: true, type: true } });
+  if (!items.length) return NextResponse.json({ error: "No readable items found." }, { status: 404 });
+
+  const material = (items as StudyItem[]).map((item) => `TITLE: ${item.title}\nTYPE: ${item.type}\nTAGS: ${item.tags.join(", ")}\nCONTENT: ${item.description || "No text content available."}`).join("\n\n---\n\n");
+  const input = `${prompts[parsed.data.action]}${parsed.data.action === "ask" ? `\nQUESTION: ${parsed.data.question || ""}` : ""}\n\nMATERIAL:\n${material}`;
+  const response = await fetch("https://api.openai.com/v1/responses", { method: "POST", headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" }, body: JSON.stringify({ model: process.env.AI_MODEL || "gpt-5", input, store: false }) });
+  const data = await response.json() as { output_text?: string; error?: { message?: string } };
+  if (!response.ok) return NextResponse.json({ error: data.error?.message || "AI request failed." }, { status: 502 });
+  await db.auditLog.create({ data: { userId: user.id, action: `ai.${parsed.data.action}`, detail: `${items.length} items` } });
+  return NextResponse.json({ output: data.output_text || "No study response was returned." });
+}
+
