@@ -26,6 +26,7 @@ model User {
   workspaces   Workspace[]
   auditLogs    AuditLog[]
   integrations Integration[]
+  flashcards    Flashcard[]
 }
 
 model Workspace {
@@ -35,6 +36,7 @@ model Workspace {
   ownerId   String
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   items     BrainItem[]
+  flashcards Flashcard[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -84,4 +86,18 @@ model Integration {
   updatedAt       DateTime @updatedAt
 
   @@unique([userId, provider])
+}
+
+model Flashcard {
+  id          String    @id @default(cuid())
+  front       String    @db.Text
+  back        String    @db.Text
+  dueAt       DateTime  @default(now())
+  interval    Int       @default(0)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
