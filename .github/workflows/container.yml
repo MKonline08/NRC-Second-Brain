@@ -29,9 +29,13 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:latest
             ${{ env.IMAGE }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
       - uses: docker/build-push-action@v6
         with:
           context: .
           target: migrate
           push: true
           tags: ${{ env.IMAGE }}:migrate-latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
