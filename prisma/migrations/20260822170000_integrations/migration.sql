@@ -1,0 +1,2 @@
+CREATE TABLE "Integration" ("id" TEXT PRIMARY KEY, "provider" TEXT NOT NULL, "accountLabel" TEXT, "configEncrypted" TEXT NOT NULL, "syncStatus" TEXT NOT NULL DEFAULT 'ready', "lastSyncedAt" TIMESTAMP(3), "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE UNIQUE INDEX "Integration_userId_provider_key" ON "Integration"("userId", "provider");

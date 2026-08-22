@@ -23,6 +23,7 @@ model User {
   updatedAt    DateTime   @updatedAt
   workspaces   Workspace[]
   auditLogs    AuditLog[]
+  integrations Integration[]
 }
 
 model Workspace {
@@ -66,4 +67,19 @@ model AuditLog {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt DateTime @default(now())
+}
+
+model Integration {
+  id              String   @id @default(cuid())
+  provider        String
+  accountLabel    String?
+  configEncrypted String   @db.Text
+  syncStatus      String   @default("ready")
+  lastSyncedAt    DateTime?
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, provider])
 }
