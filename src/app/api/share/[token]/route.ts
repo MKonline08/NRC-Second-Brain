@@ -1,0 +1,3 @@
+import { NextRequest, NextResponse } from "next/server";
+import { resolveShare } from "@/lib/share";
+export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) { const result = await resolveShare((await params).token, request.nextUrl.searchParams.get("password")); if ("error" in result) return NextResponse.json({ error: result.error }, { status: 404 }); if ("protected" in result) return NextResponse.json({ protected: true }, { status: 401 }); return NextResponse.json({ item: { id: result.item.id, title: result.item.title, type: result.item.type, description: result.item.description, url: result.item.url, hasFile: Boolean(result.item.filePath) } }); }

@@ -1,0 +1,2 @@
+CREATE TABLE "ShareLink" ("id" TEXT PRIMARY KEY, "token" TEXT NOT NULL UNIQUE, "passwordHash" TEXT, "expiresAt" TIMESTAMP(3), "accessCount" INTEGER NOT NULL DEFAULT 0, "itemId" TEXT NOT NULL REFERENCES "BrainItem"("id") ON DELETE CASCADE, "ownerId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX "ShareLink_ownerId_idx" ON "ShareLink"("ownerId");
