@@ -50,6 +50,7 @@ model BrainItem {
   color       String    @default("cyan")
   tags        String[]
   dueAt       DateTime?
+  isCompleted Boolean   @default(false)
   isArchived  Boolean   @default(false)
   deletedAt   DateTime?
   workspaceId String

@@ -16,6 +16,19 @@ services:
       # Change the left-side path to the CasaOS folder you want NRC to index. It stays read-only.
       - /DATA/Media:/library:ro
     depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+  migrate:
+    build:
+      context: .
+      target: migrate
+    container_name: nrc-second-brain-migrate
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://nrc:${POSTGRES_PASSWORD}@db:5432/nrc_second_brain
+    depends_on:
       db:
         condition: service_healthy
   db:
@@ -28,7 +41,6 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - /DATA/AppData/nrc-second-brain/db:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-nrc-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nrc -d nrc_second_brain"]
       interval: 10s
