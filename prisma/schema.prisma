@@ -18,6 +18,8 @@ model User {
   email        String     @unique
   name         String
   passwordHash String
+  twoFactorSecret String? @db.Text
+  twoFactorEnabled Boolean @default(false)
   role         String     @default("admin")
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

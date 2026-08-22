@@ -1,0 +1,13 @@
+"use client";
+
+import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function SecurityPage() {
+  const router = useRouter(); const [enabled, setEnabled] = useState(false); const [secret, setSecret] = useState(""); const [qr, setQr] = useState(""); const [code, setCode] = useState(""); const [message, setMessage] = useState("");
+  useEffect(() => { fetch("/api/security/two-factor").then((response) => response.json()).then((data) => { if (data.error) router.replace("/login"); else setEnabled(data.enabled); }); }, [router]);
+  async function start() { const response = await fetch("/api/security/two-factor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "start" }) }); const data = await response.json(); if (!response.ok) { setMessage(data.error); return; } setSecret(data.secret); setQr(data.qr); }
+  async function confirm(event: FormEvent) { event.preventDefault(); const response = await fetch("/api/security/two-factor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ secret, code }) }); const data = await response.json(); if (!response.ok) { setMessage(data.error); return; } setEnabled(true); setQr(""); setSecret(""); setMessage("Two-factor security is now enabled."); }
+  return <main className="auth-page"><section className="auth-card"><a href="/settings" className="back-link"><ArrowLeft size={15} /> Back to settings</a><div className="auth-mark"><ShieldCheck size={22} /></div><p className="eyebrow">ACCOUNT SECURITY</p><h1>Two-factor sign-in</h1>{enabled ? <p className="auth-copy">Two-factor security is enabled. Your authenticator code is required whenever you sign in.</p> : qr ? <><p className="auth-copy">Scan this with an authenticator app, then enter its newest six-digit code to finish.</p><img src={qr} className="two-factor-qr" alt="Authenticator setup QR code" /><form onSubmit={confirm} className="auth-form"><label>Authenticator code<input value={code} onChange={(event) => setCode(event.target.value)} inputMode="numeric" pattern="[0-9]{6}" required placeholder="Six-digit code" /></label><button className="primary-button auth-submit">Enable two-factor security</button></form></> : <><p className="auth-copy">Use an authenticator app on your phone as a second lock on your private workspace.</p><button className="primary-button auth-submit" onClick={() => void start()}>Set up authenticator</button></>}{message && <p className="connection-message">{message}</p>}</section></main>;
+}
