@@ -5,6 +5,7 @@ services:
     image: ghcr.io/mkonline08/nrc-second-brain:latest
     container_name: nrc-second-brain
     restart: unless-stopped
+    pull_policy: always
     ports:
       - "3000:3000"
     env_file: .env
@@ -21,9 +22,15 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
   migrate:
     image: ghcr.io/mkonline08/nrc-second-brain:migrate-latest
     container_name: nrc-second-brain-migrate
+    pull_policy: always
     env_file: .env
     environment:
       DATABASE_URL: postgresql://nrc:${POSTGRES_PASSWORD}@db:5432/nrc_second_brain
@@ -60,3 +67,5 @@ x-casaos:
     en_us: NRC Second Brain
   index: /
   port_map: "3000"
+  scheme: http
+
