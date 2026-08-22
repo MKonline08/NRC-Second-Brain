@@ -16,8 +16,8 @@ services:
       LIBRARY_DIR: /library
     volumes:
       - /DATA/AppData/nrc-second-brain:/app/data
-      # Change the left-side path to the CasaOS folder you want NRC to index. It stays read-only.
-      - /DATA/Media:/library:ro
+      # Change the left-side path to the CasaOS folder you want NRC to index.
+      - /DATA/Media:/library
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
