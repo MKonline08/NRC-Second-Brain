@@ -1,0 +1,13 @@
+"use client";
+
+import { ChevronLeft, ChevronRight, Circle, CalendarDays } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+
+type Task = { id: string; title: string; dueAt: string | null; isCompleted: boolean; color: string };
+export default function CalendarPage() {
+  const router = useRouter(); const [cursor, setCursor] = useState(() => new Date()); const [tasks, setTasks] = useState<Task[]>([]);
+  useEffect(() => { fetch("/api/session").then((response) => response.json()).then((data) => { if (!data.user) { router.replace(data.setupComplete ? "/login" : "/setup"); return; } return fetch("/api/items"); }).then((response) => response?.json()).then((data) => { if (data?.workspaces) setTasks(data.workspaces.flatMap((workspace: { items: Task[] }) => workspace.items).filter((item: Task) => item.dueAt)); }); }, [router]);
+  const month = cursor.getMonth(); const year = cursor.getFullYear(); const first = new Date(year, month, 1); const start = first.getDay(); const days = new Date(year, month + 1, 0).getDate(); const cells = Array.from({ length: 42 }, (_, index) => index - start + 1); const byDay = useMemo(() => new Map(tasks.filter((task) => task.dueAt && new Date(task.dueAt).getMonth() === month && new Date(task.dueAt).getFullYear() === year).map((task) => [new Date(task.dueAt as string).getDate(), task])), [tasks, month, year]);
+  return <main className="calendar-page"><header className="calendar-head"><a href="/">NRC Second Brain</a><div><button className="icon-button" onClick={() => setCursor(new Date(year, month - 1, 1))} aria-label="Previous month"><ChevronLeft size={17} /></button><strong>{cursor.toLocaleString("en-US", { month: "long", year: "numeric" })}</strong><button className="icon-button" onClick={() => setCursor(new Date(year, month + 1, 1))} aria-label="Next month"><ChevronRight size={17} /></button></div><a className="tool-button" href="/">Back to graph</a></header><section className="calendar-body"><div className="calendar-title"><CalendarDays size={20} /><div><p className="eyebrow">DUE DATES</p><h1>Plan your month.</h1></div></div><div className="calendar-grid"><div className="weekdays">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => <span key={day}>{day}</span>)}</div><div className="date-cells">{cells.map((day, index) => <div key={index} className={`date-cell ${day < 1 || day > days ? "outside" : ""}`}><span>{day > 0 && day <= days ? day : ""}</span>{byDay.get(day) && <div className={`calendar-task ${byDay.get(day)?.isCompleted ? "done" : ""}`}><Circle size={10} />{byDay.get(day)?.title}</div>}</div>)}</div></div></section></main>;
+}
