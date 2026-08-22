@@ -25,6 +25,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - /DATA/AppData/nrc-second-brain/db:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/01-nrc-schema.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U nrc -d nrc_second_brain"]
       interval: 10s
