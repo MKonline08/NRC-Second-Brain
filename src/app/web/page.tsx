@@ -8,7 +8,7 @@ export default function WebPage() {
   const [frameKey, setFrameKey] = useState(0);
 
   useEffect(() => {
-    setChromiumUrl(`https://${window.location.hostname}:3003/`);
+    setChromiumUrl(`${window.location.origin}/chrome/`);
   }, []);
 
   return <main className="web-page">
